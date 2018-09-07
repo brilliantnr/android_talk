@@ -1,10 +1,12 @@
 package com.example.a1027.contactsapp;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +18,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +37,6 @@ public class MemberList extends AppCompatActivity {
 
          /*
         ArrayList<Member> list = (ArrayList<Member>) new ListService(){
-
             @Override
             public List<?> perform() {
                 return query.execute();
@@ -60,11 +62,69 @@ public class MemberList extends AppCompatActivity {
 
                 }
         );
+        memberList.setOnItemLongClickListener(
+                (AdapterView<?> p, View v, int i, long l)->{
+                    Main.Member m = (Main.Member) memberList.getItemAtPosition(i);
+                    new AlertDialog.Builder(this_).setTitle("DELETE")
+                            .setMessage("정말로 삭제할까요?")
+                            .setPositiveButton(android.R.string.yes,
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            Toast.makeText(this_,"삭제실행 !! ",Toast.LENGTH_LONG).show();
+                                            ItemDelete query = new ItemDelete(this_);
+                                            Member m = (Member) memberList.getItemAtPosition(i);
+                                            query.m.seq= m.seq;
+                                            new StatusService(){
+                                                @Override
+                                                public void perform() {
+                                                    query.execute();
+                                                }
+                                            }.perform();
+                                            startActivity(new Intent(this_,MemberList.class));
+                                        }
+                                    })
+                            .setNegativeButton(android.R.string.no,
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            Toast.makeText(this_,"삭제취소 !! ",Toast.LENGTH_LONG).show();
+                                        }
+                                    })
+                            .show();
+                    Toast.makeText(this_,"길게누름 :: ",Toast.LENGTH_LONG).show();
+                    return true;
+                }
+        );
 
 
     }
+    //길레눌렀을때 추상팩토리
+    private class DeleteQuery extends Main.QueryFactory{
+        SQLiteOpenHelper helper;
+        public DeleteQuery(Context this_) {
+            super(this_);
+            helper = new Main.SQLiteHelper(this_);
+        }
+        @Override
+        public SQLiteDatabase getDatabase() {
+            return helper.getWritableDatabase();
+        }
+    }
+    private class ItemDelete extends DeleteQuery{
+        Main.Member m;
+        public ItemDelete(Context this_) {
+            super(this_);
+            m=new Main.Member();
+        }
+        public void execute(){
+            getDatabase().execSQL(String.format(" DELETE FROM %s WHERE %s LIKE '%s' ",
+                    MEMTAB,MEMSEQ,m.seq)
+                    );
+        }
+    }
 
-    //추상팩토리
+    //리스트 추상팩토리
     private class ListQuery extends Main.QueryFactory{
         SQLiteOpenHelper helper;
         public ListQuery(Context this_) {
