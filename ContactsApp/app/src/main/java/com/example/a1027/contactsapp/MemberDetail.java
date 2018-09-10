@@ -11,6 +11,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.a1027.contactsapp.util.PhoneUtil;
 
 import static com.example.a1027.contactsapp.Main.*;
 
@@ -69,10 +72,20 @@ public class MemberDetail extends AppCompatActivity {
                 }
         );
         findViewById(R.id.callBtn).setOnClickListener(
-                (View v)->{}
+                (View v)->{
+                    PhoneUtil util = new PhoneUtil(this_,this);
+                    util.setPhoneNum(phone.getText().toString());
+                    util.call();
+
+                }
         );
         findViewById(R.id.dialBtn).setOnClickListener(
-                (View v)->{}
+                (View v)->{
+                    PhoneUtil util = new PhoneUtil(this_,this);
+                    Toast.makeText(this_,"전화번호 : "+phone.getText().toString(),Toast.LENGTH_SHORT).show();
+                    util.setPhoneNum(phone.getText().toString());
+                    util.dial();
+                }
         );
         findViewById(R.id.smsBtn).setOnClickListener(
                 (View v)->{}

@@ -96,6 +96,11 @@ public class MemberList extends AppCompatActivity {
                     return true;
                 }
         );
+        findViewById(R.id.addBtn).setOnClickListener(
+                (View v)->{
+                    startActivity(new Intent(this_, MemberAdd.class));
+                }
+        );
 
 
     }
@@ -172,19 +177,20 @@ public class MemberList extends AppCompatActivity {
     private class MemberAdapter extends BaseAdapter{
         ArrayList<Member> list;
         LayoutInflater inflater;
+        Context this_;
 
         public MemberAdapter(Context this_, ArrayList<Member> list) {
             this.list = list;
             this.inflater=LayoutInflater.from(this_);
-
+            this.this_ = this_;
         }
-        private int[] photos ={
+        /*private int[] photos ={
                 R.drawable.profile_1,
                 R.drawable.profile_2,
                 R.drawable.profile_3,
                 R.drawable.profile_4,
                 R.drawable.profile_5
-        };
+        };*/
 
         @Override
         public int getCount() {
@@ -215,7 +221,29 @@ public class MemberList extends AppCompatActivity {
             }else{
                 holder = (ViewHolder) v.getTag();
             }
-            holder.profile.setImageResource(photos[i]);
+            //add 하면서 변경
+            /*holder.profile.setImageResource(photos[i]);*/
+            ItemProfile query = new ItemProfile(this_);
+            query.seq = list.get(i).seq+"";
+            holder.profile
+                    .setImageDrawable(
+                            getResources().getDrawable(
+                                    getResources().getIdentifier(
+                                            this_.getPackageName()+":drawable/"
+                                                    + (new Main.RetrieveService() {
+                                                @Override
+                                                public Object perform() {
+                                                    return query.execute();
+                                                }
+                                            }.perform())
+                                            , null, null
+                                    ), this_.getTheme()
+                            )
+                    );
+
+
+
+
             holder.name.setText(list.get(i).name);
             holder.phone.setText(list.get(i).phone);
             return v;
@@ -226,5 +254,37 @@ public class MemberList extends AppCompatActivity {
         TextView name, phone;
 
     }
+    private class MemberProfileQuery extends QueryFactory{
+        SQLiteOpenHelper helper;
+        public MemberProfileQuery(Context _this) {
+            super(_this);
+            helper = new SQLiteHelper(_this);
+        }
 
+        @Override
+        public SQLiteDatabase getDatabase() {
+            return helper.getReadableDatabase();
+        }
+    }
+    private class ItemProfile extends MemberProfileQuery {
+        String seq;
+
+        public ItemProfile(Context _this) {
+            super(_this);
+        }
+
+        public String execute() {
+            Cursor c = getDatabase()
+                    .rawQuery(String.format(
+                            " SELECT %s FROM %s WHERE %s LIKE '%s' "
+                            , MEMPHOTO, MEMTAB, MEMSEQ, seq), null);
+            String result = "";
+            if (c != null) {
+                if (c.moveToNext()) {
+                    result = c.getString(c.getColumnIndex(MEMPHOTO));
+                }
+            }
+            return result;
+        }
+    }
 }
